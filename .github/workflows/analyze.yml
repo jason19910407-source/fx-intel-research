@@ -3,6 +3,11 @@ on:
   schedule:
     - cron: '8,38 * * * *'
   workflow_dispatch:
+    inputs:
+      cloud_schedule_id:
+        description: 雲端自動排程收據，手動執行留空
+        required: false
+        type: string
 permissions:
   contents: read
   id-token: write
@@ -16,6 +21,7 @@ jobs:
     env:
       FX_CLOUD_URL: https://fx-intel-research.fxresearch-f4a7057a.workers.dev
       FREE_PLAN_CONFIRMED: 'yes'
+      FX_CLOUD_SCHEDULE_ID: ${{ github.event.inputs.cloud_schedule_id }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -25,7 +31,7 @@ jobs:
           python3 - <<'PY'
           import hashlib,zipfile,pathlib
           p=pathlib.Path('source.zip')
-          if hashlib.sha256(p.read_bytes()).hexdigest() != '51df5f995a6fd6f0f211358b4c01a7ada1096e5e71756d36774ac500577d03b5':
+          if hashlib.sha256(p.read_bytes()).hexdigest() != '356536792e673f51a7a954c55b8a923591e27640cb40dfbeb28e22ff2b1e2e6d':
               raise SystemExit('程式包完整性檢查失敗')
           with zipfile.ZipFile(p) as z:
               for n in z.namelist():
@@ -37,6 +43,6 @@ jobs:
         run: |
           python3 -m unittest discover -s tests -p 'test_*.py' -v
           run_analysis() {
-            python3 -c 'import urllib.request,runpy; o=urllib.request.build_opener(); o.addheaders=[("User-Agent","FXIntelResearchCloud/1.0 (read-only research)")]; urllib.request.install_opener(o); runpy.run_module("cloud.runner",run_name="__main__")'
+            python3 -c 'import urllib.request,runpy; o=urllib.request.build_opener(); o.addheaders=[("User-Agent","FXIntelResearchCloud/1.0 (read-only research)")]; urllib.request.install_opener(o); runpy.run_module("fallback.run_analysis",run_name="__main__")'
           }
           run_analysis || run_analysis
