@@ -3,11 +3,6 @@ on:
   schedule:
     - cron: '8,38 * * * *'
   workflow_dispatch:
-    inputs:
-      telegram_test:
-        description: '通知通路測試，非交易訊號'
-        type: boolean
-        default: false
 permissions:
   contents: read
   id-token: write
@@ -45,6 +40,3 @@ jobs:
             python3 -c 'import urllib.request,runpy; o=urllib.request.build_opener(); o.addheaders=[("User-Agent","FXIntelResearchCloud/1.0 (read-only research)")]; urllib.request.install_opener(o); runpy.run_module("cloud.runner",run_name="__main__")'
           }
           run_analysis || run_analysis
-      - name: 手動通知通路測試
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.telegram_test == 'true'
-        run: python3 -c 'import urllib.request,runpy; o=urllib.request.build_opener(); o.addheaders=[("User-Agent","FXIntelResearchCloud/1.0 (read-only research)")]; urllib.request.install_opener(o); runpy.run_module("cloud.telegram_test",run_name="__main__")'
