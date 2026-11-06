@@ -1,0 +1,13 @@
+.env*
+.dev.vars*
+secrets*
+*.sqlite*
+*.db
+*.bin
+__pycache__/
+reports/
+app/data/
+app/reports/
+node_modules/
+.wrangler/
+cloud/wrangler.json
