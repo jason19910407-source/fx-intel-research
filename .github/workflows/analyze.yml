@@ -1,0 +1,50 @@
+name: 外匯情報只讀分析
+on:
+  schedule:
+    - cron: '8,38 * * * *'
+  workflow_dispatch:
+    inputs:
+      telegram_test:
+        description: '通知通路測試，非交易訊號'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: fx-intel-analysis
+  cancel-in-progress: false
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      FX_CLOUD_URL: https://fx-intel-research.fxresearch-f4a7057a.workers.dev
+      FREE_PLAN_CONFIRMED: 'yes'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: 驗證與解開程式包
+        run: |
+          python3 - <<'PY'
+          import hashlib,zipfile,pathlib
+          p=pathlib.Path('source.zip')
+          if hashlib.sha256(p.read_bytes()).hexdigest() != '51df5f995a6fd6f0f211358b4c01a7ada1096e5e71756d36774ac500577d03b5':
+              raise SystemExit('程式包完整性檢查失敗')
+          with zipfile.ZipFile(p) as z:
+              for n in z.namelist():
+                  if pathlib.PurePosixPath(n).is_absolute() or '..' in pathlib.PurePosixPath(n).parts:
+                      raise SystemExit('拒絕不安全路徑')
+              z.extractall('.')
+          PY
+      - name: 測試與分析（不下單）
+        run: |
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+          run_analysis() {
+            python3 -c 'import urllib.request,runpy; o=urllib.request.build_opener(); o.addheaders=[("User-Agent","FXIntelResearchCloud/1.0 (read-only research)")]; urllib.request.install_opener(o); runpy.run_module("cloud.runner",run_name="__main__")'
+          }
+          run_analysis || run_analysis
+      - name: 手動通知通路測試
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.telegram_test == 'true'
+        run: python3 -c 'import urllib.request,runpy; o=urllib.request.build_opener(); o.addheaders=[("User-Agent","FXIntelResearchCloud/1.0 (read-only research)")]; urllib.request.install_opener(o); runpy.run_module("cloud.telegram_test",run_name="__main__")'
