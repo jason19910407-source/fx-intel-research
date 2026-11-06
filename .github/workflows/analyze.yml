@@ -31,7 +31,7 @@ jobs:
           python3 - <<'PY'
           import hashlib,zipfile,pathlib
           p=pathlib.Path('source.zip')
-          if hashlib.sha256(p.read_bytes()).hexdigest() != '87ba783d0e7addc309483fdfadd5fbf693119cc6d56e9aa8d3e250ba6d3d98d5':
+          if hashlib.sha256(p.read_bytes()).hexdigest() != '53a39a6358e4079ff10a4fe1ee8b4b15f13f0e6c3a3601ff84dc3cdbe405d65c':
               raise SystemExit('程式包完整性檢查失敗')
           with zipfile.ZipFile(p) as z:
               for n in z.namelist():
